@@ -9,6 +9,7 @@
 ```
 VK_GROUP_ID=Идентификатор группы VK
 VK_ACCESS_TOKEN=Ключ доступа к api.vk.com```
+```
 
 ### Как получить Access Token VK
 https://oauth.vk.com/authorize?client_id=6953420&display=page&scope=photos,groups,wall&response_type=token&v=5.95&state=123456
