@@ -17,15 +17,6 @@ def download_file(url, filename):
         return filename
 
 
-def download_last_xkcd_comics():
-    url = 'https://xkcd.com/info.0.json'
-    response = requests.get(url)
-    response.raise_for_status()
-    url = response.json()['img']
-    filename = '{}.{}'.format(response.json()['num'], url.split('.')[-1])
-    return download_file(url, filename), response.json()['alt']
-
-
 def download_random_xkcd_comics():
     url = 'https://xkcd.com/info.0.json'
     response = requests.get(url)
@@ -58,52 +49,51 @@ def vk_request(http_method, vk_method, **kwargs):
 
 
 def get_vk_groups(access_token):
-    return vk_request('get',
-                      'groups.get',
-                      params={'access_token': access_token,
-                              'v': '5.95'})
+    params = {'access_token': access_token,
+              'v': '5.95'}
+    return vk_request('get', 'groups.get', params=params)
 
 
 def get_vk_upload_link(access_token, group_id):
-    return vk_request('get',
-                      'photos.getWallUploadServer',
-                      params={'access_token': access_token,
-                              'group_id': group_id,
-                              'v': '5.95'})
+    params = {'access_token': access_token,
+              'group_id': group_id,
+              'v': '5.95'}
+    return vk_request('get', 'photos.getWallUploadServer', params=params)
 
 
 def upload_file_vk(access_token, group_id, filepath, caption):
     upload_server = get_vk_upload_link(access_token, group_id)['response']
-    file_descriptor = open(filepath, 'rb')
-    files = {'photo': file_descriptor}
-    response = requests.post(upload_server['upload_url'],
-                             files=files)
-    file_descriptor.close()
+
+    with open(filepath, 'rb') as file:
+        files = {'photo': file}
+        response = requests.post(upload_server['upload_url'], files=files)
+
     raise_for_error(response)
-    if not response.json()['photo']:
+    response_data = response.json()
+    if not response_data['photo']:
         raise VkResponseError(0, 'Photo upload error')
 
-    return vk_request('post',
-                      'photos.saveWallPhoto',
-                      data={'access_token': access_token,
-                            'user_id': upload_server['user_id'],
-                            'group_id': group_id,
-                            'photo': response.json()['photo'],
-                            'server': response.json()['server'],
-                            'hash': response.json()['hash'],
-                            'caption': caption,
-                            'v': 5.95})
+    data = {'access_token': access_token,
+            'user_id': upload_server['user_id'],
+            'group_id': group_id,
+            'photo': response_data['photo'],
+            'server': response_data['server'],
+            'hash': response_data['hash'],
+            'caption': caption,
+            'v': 5.95}
+
+    return vk_request('post', 'photos.saveWallPhoto', data=data)
 
 
 def vk_wall_post(access_token, owner_id, from_group, attachments, message):
-    return vk_request('get',
-                      'wall.post',
-                      params={'access_token': access_token,
-                              'owner_id': owner_id,
-                              'from_group': from_group,
-                              'attachments': attachments,
-                              'message': message,
-                              'v': 5.95})
+    params = {'access_token': access_token,
+              'owner_id': owner_id,
+              'from_group': from_group,
+              'attachments': attachments,
+              'message': message,
+              'v': 5.95}
+
+    return vk_request('get', 'wall.post', params=params)
 
 
 def main():
@@ -113,11 +103,8 @@ def main():
     (filepath, caption) = download_random_xkcd_comics()
 
     response = upload_file_vk(access_token, group_id, filepath, caption)['response'][0]
-    vk_wall_post(access_token,
-                 f'-{group_id}',
-                 1,
-                 'photo{}_{}'.format(response['owner_id'], response['id'], ),
-                 caption)
+    vk_wall_post(access_token, f'-{group_id}', 1, 'photo{}_{}'.format(response['owner_id'], response['id'], ), caption)
+
     print('Random XKCD comics published successfully')
     os.unlink(filepath)
     exit(0)

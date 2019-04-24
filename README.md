@@ -12,7 +12,6 @@ VK_ACCESS_TOKEN=Ключ доступа к api.vk.com
 ```
 
 ### Как получить Access Token VK
-https://oauth.vk.com/authorize?client_id=6953420&display=page&scope=photos,groups,wall&response_type=token&v=5.95&state=123456
 * Создайте группу Вконтакте - [Управление группами](https://vk.com/groups?tab=admin)
 * Получите group_id - (в адресной строке цифры после слова public) и вставьте его в .env
 * Создайте standalone-приложение Вконтакте - [Мои приложения](https://vk.com/dev)
